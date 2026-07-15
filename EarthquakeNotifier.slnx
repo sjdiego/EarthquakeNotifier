@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="EarthquakeNotifier.csproj" />
+  <Project Path="EarthquakeNotifier.Tests/EarthquakeNotifier.Tests.csproj" />
+</Solution>
