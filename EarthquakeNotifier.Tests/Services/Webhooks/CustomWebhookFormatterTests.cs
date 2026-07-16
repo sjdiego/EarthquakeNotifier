@@ -1,14 +1,13 @@
 using System;
 using System.Net.Http;
-using System.Text.Json;
 using System.Threading.Tasks;
+using EarthquakeNotifier.Domain;
+using EarthquakeNotifier.Infrastructure.Notifications;
+using EarthquakeNotifier.Infrastructure.Notifications.Formatters;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
-using EarthquakeNotifier.Domain;
-using EarthquakeNotifier.Infrastructure.Notifications;
-using EarthquakeNotifier.Infrastructure.Notifications.Formatters;
 
 namespace EarthquakeNotifier.Tests.Services.Webhooks
 {
@@ -28,13 +27,13 @@ namespace EarthquakeNotifier.Tests.Services.Webhooks
             _sampleEarthquake = new EarthquakeNotification
             {
                 EarthquakeId = "us7000kp60",
-                Magnitude    = 6.5,
-                Place        = "39 km ENE of San Francisco, California",
-                Time         = new DateTime(2024, 1, 15, 10, 30, 0, DateTimeKind.Utc),
-                Latitude     = 37.8,
-                Longitude    = -121.8,
-                Depth        = 12.5,
-                Url          = "https://earthquake.usgs.gov/earthquakes/eventpage/us7000kp60/executive"
+                Magnitude = 6.5,
+                Place = "39 km ENE of San Francisco, California",
+                Time = new DateTime(2024, 1, 15, 10, 30, 0, DateTimeKind.Utc),
+                Latitude = 37.8,
+                Longitude = -121.8,
+                Depth = 12.5,
+                Url = "https://earthquake.usgs.gov/earthquakes/eventpage/us7000kp60/executive"
             };
 
             _loggerMock = new Mock<ILogger<CustomWebhookFormatter>>();
@@ -51,7 +50,7 @@ namespace EarthquakeNotifier.Tests.Services.Webhooks
             configMock.Setup(c => c["WEBHOOK_TEMPLATE_CUSTOM"]).Returns(template);
 
             var formatter = new CustomWebhookFormatter(configMock.Object, _loggerMock.Object);
-            var request   = formatter.BuildRequest(DefaultConfig, _sampleEarthquake);
+            var request = formatter.BuildRequest(DefaultConfig, _sampleEarthquake);
 
             Assert.Equal(HttpMethod.Post, request.Method);
             var json = await ReadBodyAsync(request);
@@ -66,13 +65,13 @@ namespace EarthquakeNotifier.Tests.Services.Webhooks
             var earthquakeWithSpecialChars = new EarthquakeNotification
             {
                 EarthquakeId = "test\"id",
-                Magnitude    = 5.0,
-                Place        = "S\u00e3o Paulo, Brazil - \"Test\" Location",
-                Time         = new DateTime(2024, 1, 15, 10, 30, 0, DateTimeKind.Utc),
-                Latitude     = -23.55,
-                Longitude    = -46.63,
-                Depth        = 20,
-                Url          = "https://example.com?q=test&value=\"quoted\""
+                Magnitude = 5.0,
+                Place = "S\u00e3o Paulo, Brazil - \"Test\" Location",
+                Time = new DateTime(2024, 1, 15, 10, 30, 0, DateTimeKind.Utc),
+                Latitude = -23.55,
+                Longitude = -46.63,
+                Depth = 20,
+                Url = "https://example.com?q=test&value=\"quoted\""
             };
 
             var configMock = new Mock<IConfiguration>();
@@ -80,7 +79,7 @@ namespace EarthquakeNotifier.Tests.Services.Webhooks
             configMock.Setup(c => c["WEBHOOK_TEMPLATE_CUSTOM"]).Returns(template);
 
             var formatter = new CustomWebhookFormatter(configMock.Object, _loggerMock.Object);
-            var request   = formatter.BuildRequest(DefaultConfig, earthquakeWithSpecialChars);
+            var request = formatter.BuildRequest(DefaultConfig, earthquakeWithSpecialChars);
 
             var json = await ReadBodyAsync(request);
             Assert.NotNull(json);
@@ -95,7 +94,7 @@ namespace EarthquakeNotifier.Tests.Services.Webhooks
             configMock.Setup(c => c["WEBHOOK_TEMPLATE_CUSTOM"]).Returns(template);
 
             var formatter = new CustomWebhookFormatter(configMock.Object, _loggerMock.Object);
-            var request   = formatter.BuildRequest(DefaultConfig, _sampleEarthquake);
+            var request = formatter.BuildRequest(DefaultConfig, _sampleEarthquake);
 
             var json = await ReadBodyAsync(request);
             Assert.Contains("static_field", json);
@@ -110,7 +109,7 @@ namespace EarthquakeNotifier.Tests.Services.Webhooks
             configMock.Setup(c => c["WEBHOOK_TEMPLATE_CUSTOM"]).Returns(invalidTemplate);
 
             var formatter = new CustomWebhookFormatter(configMock.Object, _loggerMock.Object);
-            var request   = formatter.BuildRequest(DefaultConfig, _sampleEarthquake);
+            var request = formatter.BuildRequest(DefaultConfig, _sampleEarthquake);
 
             var json = await ReadBodyAsync(request);
             Assert.Contains("error", json);
@@ -123,7 +122,7 @@ namespace EarthquakeNotifier.Tests.Services.Webhooks
             configMock.Setup(c => c["WEBHOOK_TEMPLATE_CUSTOM"]).Returns("{}");
 
             var formatter = new CustomWebhookFormatter(configMock.Object, _loggerMock.Object);
-            var request   = formatter.BuildRequest(DefaultConfig, _sampleEarthquake);
+            var request = formatter.BuildRequest(DefaultConfig, _sampleEarthquake);
 
             var json = await ReadBodyAsync(request);
             Assert.Equal("{}", json);
@@ -144,7 +143,7 @@ namespace EarthquakeNotifier.Tests.Services.Webhooks
             configMock.Setup(c => c["WEBHOOK_TEMPLATE_CUSTOM"]).Returns(nestedTemplate);
 
             var formatter = new CustomWebhookFormatter(configMock.Object, _loggerMock.Object);
-            var request   = formatter.BuildRequest(DefaultConfig, _sampleEarthquake);
+            var request = formatter.BuildRequest(DefaultConfig, _sampleEarthquake);
 
             var json = await ReadBodyAsync(request);
             Assert.Contains("us7000kp60", json);
@@ -170,7 +169,7 @@ namespace EarthquakeNotifier.Tests.Services.Webhooks
             configMock.Setup(c => c["WEBHOOK_TEMPLATE_CUSTOM"]).Returns(template);
 
             var formatter = new CustomWebhookFormatter(configMock.Object, _loggerMock.Object);
-            var request   = formatter.BuildRequest(DefaultConfig, _sampleEarthquake);
+            var request = formatter.BuildRequest(DefaultConfig, _sampleEarthquake);
 
             var json = await ReadBodyAsync(request);
             Assert.Contains("us7000kp60", json);
@@ -186,7 +185,7 @@ namespace EarthquakeNotifier.Tests.Services.Webhooks
             configMock.Setup(c => c["WEBHOOK_TEMPLATE_CUSTOM"]).Returns((string?)null);
 
             var formatter = new CustomWebhookFormatter(configMock.Object, _loggerMock.Object);
-            var request   = formatter.BuildRequest(DefaultConfig, _sampleEarthquake);
+            var request = formatter.BuildRequest(DefaultConfig, _sampleEarthquake);
 
             var json = await ReadBodyAsync(request);
             Assert.Equal("{}", json);

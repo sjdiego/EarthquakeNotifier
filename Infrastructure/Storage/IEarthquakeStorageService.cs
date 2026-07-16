@@ -12,6 +12,6 @@ namespace EarthquakeNotifier.Infrastructure.Storage
         /// Atomically saves the earthquake event.
         /// Returns true if saved (new event), false if it already existed (duplicate).
         /// </summary>
-        Task<bool> TrySaveAsync(EarthquakeNotification earthquake);
+        public Task<bool> TrySaveAsync(EarthquakeNotification earthquake);
     }
 }

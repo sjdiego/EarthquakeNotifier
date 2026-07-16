@@ -14,6 +14,6 @@ namespace EarthquakeNotifier.Infrastructure.Notifications
         /// </summary>
         /// <param name="config">Webhook configuration: base URL, destination and secret token.</param>
         /// <param name="notification">The earthquake notification to include in the request.</param>
-        HttpRequestMessage BuildRequest(WebhookConfig config, EarthquakeNotification notification);
+        public HttpRequestMessage BuildRequest(WebhookConfig config, EarthquakeNotification notification);
     }
 }

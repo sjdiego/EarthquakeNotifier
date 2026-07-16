@@ -3,10 +3,9 @@ using System.Globalization;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
+using EarthquakeNotifier.Domain;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using EarthquakeNotifier.Domain;
-using EarthquakeNotifier.Infrastructure.Notifications;
 
 namespace EarthquakeNotifier.Infrastructure.Notifications.Formatters
 {
@@ -15,18 +14,11 @@ namespace EarthquakeNotifier.Infrastructure.Notifications.Formatters
     /// Reads WEBHOOK_TEMPLATE_CUSTOM from configuration and replaces placeholders.
     /// Supported placeholders: {earthquakeId}, {magnitude}, {place}, {time}, {latitude}, {longitude}, {depth}, {url}
     /// </summary>
-    public class CustomWebhookFormatter : IWebhookNotificationFormatter
+    public partial class CustomWebhookFormatter(
+        IConfiguration configuration,
+        ILogger<CustomWebhookFormatter> logger) : IWebhookNotificationFormatter
     {
-        private readonly string _customTemplate;
-        private readonly ILogger<CustomWebhookFormatter> _logger;
-
-        public CustomWebhookFormatter(
-            IConfiguration configuration,
-            ILogger<CustomWebhookFormatter> logger)
-        {
-            _customTemplate = configuration["WEBHOOK_TEMPLATE_CUSTOM"] ?? "{}";
-            _logger = logger;
-        }
+        private readonly string _customTemplate = configuration["WEBHOOK_TEMPLATE_CUSTOM"] ?? "{}";
 
         /// <summary>
         /// Builds an HTTP request using the custom template with placeholder replacement.
@@ -41,19 +33,19 @@ namespace EarthquakeNotifier.Infrastructure.Notifications.Formatters
             string json;
             try
             {
-                var replacedTemplate = ReplaceTemplatePlaceholders(_customTemplate, notification);
+                string replacedTemplate = ReplaceTemplatePlaceholders(_customTemplate, notification);
                 // Validate that the template produces valid JSON
                 JsonSerializer.Deserialize<JsonElement>(replacedTemplate);
                 json = replacedTemplate;
             }
             catch (JsonException ex)
             {
-                _logger.LogError(ex, "Failed to parse custom webhook template as JSON after placeholder replacement");
+                LogInvalidJsonTemplate(logger, ex);
                 json = JsonSerializer.Serialize(new { error = "Invalid JSON template", details = ex.Message });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Unexpected error in custom webhook formatter");
+                LogFormatterError(logger, ex);
                 json = JsonSerializer.Serialize(new { error = "Formatter error", details = ex.Message });
             }
 
@@ -73,7 +65,7 @@ namespace EarthquakeNotifier.Infrastructure.Notifications.Formatters
         /// </summary>
         private string ReplaceTemplatePlaceholders(string template, EarthquakeNotification notification)
         {
-            var result = template
+            string result = template
                 .Replace("{earthquakeId}", EscapeJsonValue(notification.EarthquakeId))
                 .Replace("{magnitude}", notification.Magnitude.ToString("F2", CultureInfo.InvariantCulture))
                 .Replace("{place}", EscapeJsonValue(notification.Place))
@@ -84,7 +76,7 @@ namespace EarthquakeNotifier.Infrastructure.Notifications.Formatters
                 .Replace("{url}", EscapeJsonValue(notification.Url))
                 .Replace("{timestamp}", DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture));
 
-            _logger.LogDebug("Template placeholders replaced successfully");
+            LogPlaceholdersReplaced(logger);
             return result;
         }
 

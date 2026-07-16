@@ -2,10 +2,10 @@ using System;
 using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Xunit;
 using EarthquakeNotifier.Domain;
 using EarthquakeNotifier.Infrastructure.Notifications;
 using EarthquakeNotifier.Infrastructure.Notifications.Formatters;
+using Xunit;
 
 namespace EarthquakeNotifier.Tests.Services.Webhooks
 {
@@ -22,13 +22,13 @@ namespace EarthquakeNotifier.Tests.Services.Webhooks
             _sampleEarthquake = new EarthquakeNotification
             {
                 EarthquakeId = "us7000kp60",
-                Magnitude    = 6.5,
-                Place        = "39 km ENE of San Francisco, California",
-                Time         = new DateTime(2024, 1, 15, 10, 30, 0, DateTimeKind.Utc),
-                Latitude     = 37.8,
-                Longitude    = -121.8,
-                Depth        = 12.5,
-                Url          = "https://earthquake.usgs.gov/earthquakes/eventpage/us7000kp60/executive"
+                Magnitude = 6.5,
+                Place = "39 km ENE of San Francisco, California",
+                Time = new DateTime(2024, 1, 15, 10, 30, 0, DateTimeKind.Utc),
+                Latitude = 37.8,
+                Longitude = -121.8,
+                Depth = 12.5,
+                Url = "https://earthquake.usgs.gov/earthquakes/eventpage/us7000kp60/executive"
             };
         }
 
@@ -42,8 +42,8 @@ namespace EarthquakeNotifier.Tests.Services.Webhooks
         public async Task NtfyWebhookFormatter_BuildRequest_ProducesCorrectStructure()
         {
             var formatter = new NtfyWebhookFormatter();
-            var config    = new WebhookConfig(BaseUrl: "https://ntfy.sh", Dest: "test-topic", Token: null);
-            var request   = formatter.BuildRequest(config, _sampleEarthquake);
+            var config = new WebhookConfig(BaseUrl: "https://ntfy.sh", Dest: "test-topic", Token: null);
+            var request = formatter.BuildRequest(config, _sampleEarthquake);
 
             // Must POST to the instance root
             Assert.Equal(HttpMethod.Post, request.Method);
@@ -52,11 +52,11 @@ namespace EarthquakeNotifier.Tests.Services.Webhooks
 
             // Body is JSON with all ntfy fields including topic
             var body = await ReadBodyAsync(request);
-            Assert.True(body.TryGetProperty("topic",    out var topic));
-            Assert.True(body.TryGetProperty("title",    out var title));
-            Assert.True(body.TryGetProperty("message",  out _));
+            Assert.True(body.TryGetProperty("topic", out var topic));
+            Assert.True(body.TryGetProperty("title", out var title));
+            Assert.True(body.TryGetProperty("message", out _));
             Assert.True(body.TryGetProperty("priority", out _));
-            Assert.True(body.TryGetProperty("click",    out _));
+            Assert.True(body.TryGetProperty("click", out _));
             Assert.Equal("test-topic", topic.GetString());
             Assert.Contains("6.5", title.GetString() ?? string.Empty);
         }
@@ -65,8 +65,8 @@ namespace EarthquakeNotifier.Tests.Services.Webhooks
         public async Task NtfyWebhookFormatter_BuildRequest_SendsTokenAsAuthorizationHeader()
         {
             var formatter = new NtfyWebhookFormatter();
-            var config    = new WebhookConfig(BaseUrl: "https://ntfy.example.com", Dest: "my-topic", Token: "tk_abc123");
-            var request   = formatter.BuildRequest(config, _sampleEarthquake);
+            var config = new WebhookConfig(BaseUrl: "https://ntfy.example.com", Dest: "my-topic", Token: "tk_abc123");
+            var request = formatter.BuildRequest(config, _sampleEarthquake);
 
             // Token must be sent as Authorization header, not in query string
             Assert.True(request.Headers.TryGetValues("Authorization", out var values));
@@ -82,8 +82,8 @@ namespace EarthquakeNotifier.Tests.Services.Webhooks
         public async Task TelegramWebhookFormatter_BuildRequest_ProducesCorrectStructure()
         {
             var formatter = new TelegramWebhookFormatter();
-            var config    = new WebhookConfig(BaseUrl: "https://api.telegram.org", Dest: "-1001234567890", Token: "123:TOKEN");
-            var request   = formatter.BuildRequest(config, _sampleEarthquake);
+            var config = new WebhookConfig(BaseUrl: "https://api.telegram.org", Dest: "-1001234567890", Token: "123:TOKEN");
+            var request = formatter.BuildRequest(config, _sampleEarthquake);
 
             Assert.Equal(HttpMethod.Post, request.Method);
             // Must use sendRichMessage endpoint
@@ -92,14 +92,14 @@ namespace EarthquakeNotifier.Tests.Services.Webhooks
 
             var body = await ReadBodyAsync(request);
             // chat_id is in the body
-            Assert.True(body.TryGetProperty("chat_id",      out var chatId));
+            Assert.True(body.TryGetProperty("chat_id", out var chatId));
             Assert.True(body.TryGetProperty("rich_message", out var richMessage));
             Assert.True(body.TryGetProperty("reply_markup", out var replyMarkup));
             Assert.Equal("-1001234567890", chatId.GetString());
 
-            Assert.True(richMessage.TryGetProperty("html",        out var text));
+            Assert.True(richMessage.TryGetProperty("html", out var text));
             Assert.False(richMessage.TryGetProperty("parse_mode", out _));
-            Assert.Contains("6.5",           text.GetString() ?? string.Empty);
+            Assert.Contains("6.5", text.GetString() ?? string.Empty);
             Assert.Contains("San Francisco", text.GetString() ?? string.Empty);
             Assert.True(replyMarkup.TryGetProperty("inline_keyboard", out _));
         }
@@ -109,7 +109,7 @@ namespace EarthquakeNotifier.Tests.Services.Webhooks
         {
             var formatter = new TelegramWebhookFormatter();
             // No BaseUrl → should default to https://api.telegram.org
-            var config  = new WebhookConfig(BaseUrl: null, Dest: "-1001", Token: "123:TOKEN");
+            var config = new WebhookConfig(BaseUrl: null, Dest: "-1001", Token: "123:TOKEN");
             var request = formatter.BuildRequest(config, _sampleEarthquake);
 
             Assert.Contains("api.telegram.org", request.RequestUri!.Host);
@@ -119,7 +119,7 @@ namespace EarthquakeNotifier.Tests.Services.Webhooks
         public void TelegramWebhookFormatter_BuildRequest_ThrowsWhenDestMissing()
         {
             var formatter = new TelegramWebhookFormatter();
-            var config    = new WebhookConfig(BaseUrl: null, Dest: null, Token: "123:TOKEN");
+            var config = new WebhookConfig(BaseUrl: null, Dest: null, Token: "123:TOKEN");
 
             Assert.Throws<ArgumentException>(() => formatter.BuildRequest(config, _sampleEarthquake));
         }
@@ -128,7 +128,7 @@ namespace EarthquakeNotifier.Tests.Services.Webhooks
         public void TelegramWebhookFormatter_BuildRequest_ThrowsWhenDestEmpty()
         {
             var formatter = new TelegramWebhookFormatter();
-            var config    = new WebhookConfig(BaseUrl: null, Dest: "  ", Token: "123:TOKEN");
+            var config = new WebhookConfig(BaseUrl: null, Dest: "  ", Token: "123:TOKEN");
 
             Assert.Throws<ArgumentException>(() => formatter.BuildRequest(config, _sampleEarthquake));
         }
@@ -137,8 +137,8 @@ namespace EarthquakeNotifier.Tests.Services.Webhooks
         public async Task DiscordWebhookFormatter_BuildRequest_ProducesCorrectStructure()
         {
             var formatter = new DiscordWebhookFormatter();
-            var config    = new WebhookConfig(BaseUrl: null, Dest: null, Token: "123456/abcdeftoken");
-            var request   = formatter.BuildRequest(config, _sampleEarthquake);
+            var config = new WebhookConfig(BaseUrl: null, Dest: null, Token: "123456/abcdeftoken");
+            var request = formatter.BuildRequest(config, _sampleEarthquake);
 
             Assert.Equal(HttpMethod.Post, request.Method);
             Assert.Equal("application/json", request.Content!.Headers.ContentType!.MediaType);
@@ -150,7 +150,7 @@ namespace EarthquakeNotifier.Tests.Services.Webhooks
             Assert.True(embeds.GetArrayLength() > 0);
 
             var embed = embeds[0];
-            Assert.True(embed.TryGetProperty("title",  out var title));
+            Assert.True(embed.TryGetProperty("title", out var title));
             Assert.True(embed.TryGetProperty("fields", out var fields));
             Assert.Contains("6.5", title.GetString() ?? string.Empty);
             Assert.True(fields.GetArrayLength() > 0);
@@ -160,20 +160,20 @@ namespace EarthquakeNotifier.Tests.Services.Webhooks
         public async Task GenericWebhookFormatter_BuildRequest_ProducesCorrectStructure()
         {
             var formatter = new GenericWebhookFormatter();
-            var config    = new WebhookConfig(BaseUrl: "https://example.com/webhook", Dest: null, Token: null);
-            var request   = formatter.BuildRequest(config, _sampleEarthquake);
+            var config = new WebhookConfig(BaseUrl: "https://example.com/webhook", Dest: null, Token: null);
+            var request = formatter.BuildRequest(config, _sampleEarthquake);
 
             Assert.Equal(HttpMethod.Post, request.Method);
             Assert.Equal("application/json", request.Content!.Headers.ContentType!.MediaType);
 
             var body = await ReadBodyAsync(request);
             Assert.True(body.TryGetProperty("earthquakeId", out var id));
-            Assert.True(body.TryGetProperty("magnitude",    out var magnitude));
-            Assert.True(body.TryGetProperty("place",        out _));
-            Assert.True(body.TryGetProperty("latitude",     out _));
-            Assert.True(body.TryGetProperty("longitude",    out _));
-            Assert.True(body.TryGetProperty("depth",        out _));
-            Assert.True(body.TryGetProperty("url",          out _));
+            Assert.True(body.TryGetProperty("magnitude", out var magnitude));
+            Assert.True(body.TryGetProperty("place", out _));
+            Assert.True(body.TryGetProperty("latitude", out _));
+            Assert.True(body.TryGetProperty("longitude", out _));
+            Assert.True(body.TryGetProperty("depth", out _));
+            Assert.True(body.TryGetProperty("url", out _));
 
             Assert.Equal("us7000kp60", id.GetString());
             Assert.Equal(6.5, magnitude.GetDouble());
@@ -186,13 +186,13 @@ namespace EarthquakeNotifier.Tests.Services.Webhooks
             var minorEarthquake = new EarthquakeNotification
             {
                 EarthquakeId = "test1",
-                Magnitude    = 4.5,
-                Place        = "Test Location",
-                Time         = DateTime.UtcNow,
-                Latitude     = 0,
-                Longitude    = 0,
-                Depth        = 10,
-                Url          = "http://test"
+                Magnitude = 4.5,
+                Place = "Test Location",
+                Time = DateTime.UtcNow,
+                Latitude = 0,
+                Longitude = 0,
+                Depth = 10,
+                Url = "http://test"
             };
 
             var req1 = formatter.BuildRequest(new WebhookConfig(null, null, "123/token"), _sampleEarthquake);
@@ -214,13 +214,13 @@ namespace EarthquakeNotifier.Tests.Services.Webhooks
             var earthquakeWithSpecialChars = new EarthquakeNotification
             {
                 EarthquakeId = "test_special",
-                Magnitude    = 5.0,
-                Place        = "100 km NE of S\u00e3o Paulo, Brazil (Latitude: -23.55\u00b0)",
-                Time         = DateTime.UtcNow,
-                Latitude     = -23.55,
-                Longitude    = -46.63,
-                Depth        = 20,
-                Url          = "http://test?param=value&other=data"
+                Magnitude = 5.0,
+                Place = "100 km NE of S\u00e3o Paulo, Brazil (Latitude: -23.55\u00b0)",
+                Time = DateTime.UtcNow,
+                Latitude = -23.55,
+                Longitude = -46.63,
+                Depth = 20,
+                Url = "http://test?param=value&other=data"
             };
 
             (IWebhookNotificationFormatter formatter, WebhookConfig config)[] cases =
@@ -234,7 +234,7 @@ namespace EarthquakeNotifier.Tests.Services.Webhooks
             foreach (var (fmt, cfg) in cases)
             {
                 var request = fmt.BuildRequest(cfg, earthquakeWithSpecialChars);
-                var body    = await request.Content!.ReadAsStringAsync();
+                var body = await request.Content!.ReadAsStringAsync();
                 Assert.NotNull(body);
                 Assert.True(body.Length > 0);
             }

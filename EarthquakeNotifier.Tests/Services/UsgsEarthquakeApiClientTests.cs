@@ -1,16 +1,14 @@
-using System;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
+using EarthquakeNotifier.Infrastructure.Api.Usgs;
+using EarthquakeNotifier.Tests.Fixtures;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Moq.Protected;
 using Xunit;
-using EarthquakeNotifier.Infrastructure.Api.Usgs;
-using EarthquakeNotifier.Tests.Fixtures;
 
 namespace EarthquakeNotifier.Tests.Services
 {
@@ -20,12 +18,10 @@ namespace EarthquakeNotifier.Tests.Services
     /// </summary>
     public class UsgsEarthquakeApiClientTests
     {
-        private readonly Mock<IConfiguration> _configurationMock;
         private readonly Mock<ILogger<UsgsEarthquakeApiClient>> _loggerMock;
 
         public UsgsEarthquakeApiClientTests()
         {
-            _configurationMock = new Mock<IConfiguration>();
             _loggerMock = new Mock<ILogger<UsgsEarthquakeApiClient>>();
         }
 
@@ -50,7 +46,7 @@ namespace EarthquakeNotifier.Tests.Services
                 .ReturnsAsync(response);
 
             var client = new HttpClient(handlerMock.Object);
-            var apiClient = new UsgsEarthquakeApiClient(client, _configurationMock.Object, _loggerMock.Object);
+            var apiClient = new UsgsEarthquakeApiClient(client, _loggerMock.Object);
 
             // Act
             var result = await apiClient.GetRecentEarthquakesAsync(4.0);
@@ -84,7 +80,7 @@ namespace EarthquakeNotifier.Tests.Services
                 .ReturnsAsync(response);
 
             var client = new HttpClient(handlerMock.Object);
-            var apiClient = new UsgsEarthquakeApiClient(client, _configurationMock.Object, _loggerMock.Object);
+            var apiClient = new UsgsEarthquakeApiClient(client, _loggerMock.Object);
 
             // Act
             var result = await apiClient.GetRecentEarthquakesAsync(5.0);
@@ -116,7 +112,7 @@ namespace EarthquakeNotifier.Tests.Services
                 .ReturnsAsync(response);
 
             var client = new HttpClient(handlerMock.Object);
-            var apiClient = new UsgsEarthquakeApiClient(client, _configurationMock.Object, _loggerMock.Object);
+            var apiClient = new UsgsEarthquakeApiClient(client, _loggerMock.Object);
 
             // Act
             var result = await apiClient.GetRecentEarthquakesAsync(4.0);
@@ -145,7 +141,7 @@ namespace EarthquakeNotifier.Tests.Services
                 .ReturnsAsync(response);
 
             var client = new HttpClient(handlerMock.Object);
-            var apiClient = new UsgsEarthquakeApiClient(client, _configurationMock.Object, _loggerMock.Object);
+            var apiClient = new UsgsEarthquakeApiClient(client, _loggerMock.Object);
 
             // Act
             var result = await apiClient.GetRecentEarthquakesAsync(4.0);
@@ -170,7 +166,7 @@ namespace EarthquakeNotifier.Tests.Services
                 .ThrowsAsync(new TaskCanceledException("Request timeout"));
 
             var client = new HttpClient(handlerMock.Object);
-            var apiClient = new UsgsEarthquakeApiClient(client, _configurationMock.Object, _loggerMock.Object);
+            var apiClient = new UsgsEarthquakeApiClient(client, _loggerMock.Object);
 
             // Act
             var result = await apiClient.GetRecentEarthquakesAsync(4.0);
@@ -200,7 +196,7 @@ namespace EarthquakeNotifier.Tests.Services
                 .ReturnsAsync(response);
 
             var client = new HttpClient(handlerMock.Object);
-            var apiClient = new UsgsEarthquakeApiClient(client, _configurationMock.Object, _loggerMock.Object);
+            var apiClient = new UsgsEarthquakeApiClient(client, _loggerMock.Object);
 
             // Act
             var result = await apiClient.GetRecentEarthquakesAsync(4.0);
@@ -230,7 +226,7 @@ namespace EarthquakeNotifier.Tests.Services
                 .ReturnsAsync(response);
 
             var client = new HttpClient(handlerMock.Object);
-            var apiClient = new UsgsEarthquakeApiClient(client, _configurationMock.Object, _loggerMock.Object);
+            var apiClient = new UsgsEarthquakeApiClient(client, _loggerMock.Object);
 
             // Act
             var result = await apiClient.GetRecentEarthquakesAsync(4.0);
@@ -246,7 +242,7 @@ namespace EarthquakeNotifier.Tests.Services
             Assert.Equal(-121.8, earthquake.Longitude);
             Assert.Equal(37.8, earthquake.Latitude);
             Assert.Equal(12.5, earthquake.Depth);
-            Assert.True(earthquake.Url.Contains("earthquake.usgs.gov"));
+            Assert.Contains("earthquake.usgs.gov", earthquake.Url);
         }
 
         [Fact]
@@ -269,7 +265,7 @@ namespace EarthquakeNotifier.Tests.Services
                 .ReturnsAsync(response);
 
             var client = new HttpClient(handlerMock.Object);
-            var apiClient = new UsgsEarthquakeApiClient(client, _configurationMock.Object, _loggerMock.Object);
+            var apiClient = new UsgsEarthquakeApiClient(client, _loggerMock.Object);
 
             // Act
             var result = await apiClient.GetRecentEarthquakesAsync(4.0);

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Threading;
@@ -8,17 +7,15 @@ using System.Threading.Tasks;
 using Azure;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
+using EarthquakeNotifier.Common;
+using EarthquakeNotifier.Domain;
+using EarthquakeNotifier.Infrastructure.Api;
+using EarthquakeNotifier.Infrastructure.Notifications;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
-using EarthquakeNotifier.Common;
-using EarthquakeNotifier.Domain;
-using EarthquakeNotifier.Infrastructure.Api;
-using EarthquakeNotifier.Infrastructure.Notifications;
-using EarthquakeNotifier.Infrastructure.Storage;
-using EarthquakeNotifier.Tests.Fixtures;
 
 namespace EarthquakeNotifier.Tests
 {

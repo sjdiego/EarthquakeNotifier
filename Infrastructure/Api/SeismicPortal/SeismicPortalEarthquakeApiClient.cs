@@ -5,12 +5,9 @@ using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 using EarthquakeNotifier.Common;
 using EarthquakeNotifier.Domain;
-using EarthquakeNotifier.Infrastructure.Api;
-using EarthquakeNotifier.Infrastructure.Api.SeismicPortal;
+using Microsoft.Extensions.Logging;
 
 namespace EarthquakeNotifier.Infrastructure.Api.SeismicPortal
 {
@@ -18,24 +15,12 @@ namespace EarthquakeNotifier.Infrastructure.Api.SeismicPortal
     /// Implementation of IEarthquakeApiClient for SeismicPortal FDSN API.
     /// Consumes JSON-formatted earthquake data from SeismicPortal European earthquake monitoring service.
     /// </summary>
-    public class SeismicPortalEarthquakeApiClient : IEarthquakeApiClient
+    public partial class SeismicPortalEarthquakeApiClient(
+        HttpClient httpClient,
+        ILogger<SeismicPortalEarthquakeApiClient> logger) : IEarthquakeApiClient
     {
         private const string ApiUrl = "https://www.seismicportal.eu/fdsnws/event/1/query";
-
-        private readonly HttpClient _httpClient;
-        private readonly ILogger<SeismicPortalEarthquakeApiClient> _logger;
-
-        /// <summary>
-        /// Initializes the client with an <see cref="HttpClient"/> configured by <c>IHttpClientFactory</c>.
-        /// </summary>
-        public SeismicPortalEarthquakeApiClient(
-            HttpClient httpClient,
-            IConfiguration configuration,
-            ILogger<SeismicPortalEarthquakeApiClient> logger)
-        {
-            _httpClient = httpClient;
-            _logger = logger;
-        }
+        private static readonly JsonSerializerOptions _options = new() { PropertyNameCaseInsensitive = true };
 
         /// <summary>
         /// Retrieves recent earthquake events from SeismicPortal API filtered by minimum magnitude.
@@ -46,46 +31,45 @@ namespace EarthquakeNotifier.Infrastructure.Api.SeismicPortal
         {
             try
             {
-                _logger.LogInformation("Fetching earthquakes from SeismicPortal API with minimum magnitude: {MinMagnitude}", minMagnitude);
+                LogFetchingEarthquakes(logger, minMagnitude);
 
                 var requestUrl = BuildRequestUrl(minMagnitude);
-                var response = await _httpClient.GetAsync(requestUrl);
+                var response = await httpClient.GetAsync(requestUrl);
                 response.EnsureSuccessStatusCode();
 
-                var content = await response.Content.ReadAsStringAsync();
-                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-                var featureCollection = JsonSerializer.Deserialize<SeismicPortalFeatureCollection>(content, options);
+                await using var stream = await response.Content.ReadAsStreamAsync();
+                var featureCollection = await JsonSerializer.DeserializeAsync<SeismicPortalFeatureCollection>(stream, _options);
 
                 if (featureCollection?.Features == null)
                 {
-                    _logger.LogWarning("No features found in SeismicPortal API response");
-                    return Result<List<EarthquakeNotification>>.Success(new List<EarthquakeNotification>());
+                    LogNoFeatures(logger);
+                    return Result<List<EarthquakeNotification>>.Success([]);
                 }
 
                 var earthquakes = featureCollection.Features
                     .Where(f => f.Properties.Magnitude.HasValue && f.Properties.Magnitude.Value >= minMagnitude)
-                    .Select(f => MapToEarthquakeNotification(f))
+                    .Select(MapToEarthquakeNotification)
                     .Where(e => e != null)
                     .Cast<EarthquakeNotification>()
                     .OrderBy(e => e.Time)
                     .ToList();
 
-                _logger.LogInformation("Successfully retrieved {Count} earthquakes from SeismicPortal API", earthquakes.Count);
+                LogRetrievedCount(logger, earthquakes.Count);
                 return Result<List<EarthquakeNotification>>.Success(earthquakes);
             }
             catch (HttpRequestException ex)
             {
-                _logger.LogError(ex, "HTTP error occurred while fetching SeismicPortal earthquakes");
+                LogHttpError(logger, ex);
                 return Result<List<EarthquakeNotification>>.Failure("SeismicPortal API request failed", ex);
             }
             catch (JsonException ex)
             {
-                _logger.LogError(ex, "JSON deserialization error occurred while parsing SeismicPortal response");
+                LogJsonError(logger, ex);
                 return Result<List<EarthquakeNotification>>.Failure("Failed to parse SeismicPortal API response", ex);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Unexpected error occurred while fetching SeismicPortal earthquakes");
+                LogUnexpectedError(logger, ex);
                 return Result<List<EarthquakeNotification>>.Failure("Unexpected error fetching SeismicPortal earthquakes", ex);
             }
         }
@@ -93,7 +77,7 @@ namespace EarthquakeNotifier.Infrastructure.Api.SeismicPortal
         /// <summary>
         /// Builds the request URL with query parameters for minimum magnitude.
         /// </summary>
-        private string BuildRequestUrl(double minMagnitude)
+        private static string BuildRequestUrl(double minMagnitude)
         {
             var separator = ApiUrl.Contains("?") ? "&" : "?";
             return $"{ApiUrl}{separator}limit=10&minmag={minMagnitude.ToString("F1", CultureInfo.InvariantCulture)}&format=json";
@@ -143,7 +127,7 @@ namespace EarthquakeNotifier.Infrastructure.Api.SeismicPortal
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Error mapping SeismicPortal feature to EarthquakeNotification");
+                LogMappingError(logger, ex);
                 return null;
             }
         }
@@ -154,11 +138,9 @@ namespace EarthquakeNotifier.Infrastructure.Api.SeismicPortal
         private DateTime ParseSeismicPortalDateTime(string dateTimeString)
         {
             if (DateTime.TryParse(dateTimeString, out var dateTime))
-            {
                 return dateTime;
-            }
 
-            _logger.LogWarning("Failed to parse SeismicPortal datetime: {DateTimeString}", dateTimeString);
+            LogDateTimeParseWarning(logger, dateTimeString);
             return DateTime.UtcNow;
         }
     }

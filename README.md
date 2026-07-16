@@ -24,23 +24,44 @@
 
 ```
 EarthquakeNotifier/
+├── Common/
+│   └── Result.cs                            # Result<T> type for error handling
 ├── Domain/
-│   └── EarthquakeNotification.cs        # Core domain model
+│   └── EarthquakeNotification.cs            # Core domain model
 ├── Infrastructure/
 │   ├── Api/
 │   │   ├── IEarthquakeApiClient.cs
-│   │   ├── Usgs/                        # USGS GeoJSON client + models
-│   │   └── SeismicPortal/               # SeismicPortal FDSN client + models
+│   │   ├── Usgs/                            # USGS GeoJSON client + models
+│   │   │   ├── UsgsEarthquakeApiClient.cs
+│   │   │   ├── UsgsEarthquakeApiClient.Log.cs
+│   │   │   └── UsgsGeoJsonModels.cs
+│   │   └── SeismicPortal/                   # SeismicPortal FDSN client + models
+│   │       ├── SeismicPortalEarthquakeApiClient.cs
+│   │       ├── SeismicPortalEarthquakeApiClient.Log.cs
+│   │       └── SeismicPortalModels.cs
 │   ├── Notifications/
-│   │   ├── WebhookNotificationService.cs
+│   │   ├── IWebhookNotificationService.cs
+│   │   ├── IWebhookNotificationFormatter.cs
+│   │   ├── WebhookConfig.cs
 │   │   ├── WebhookFormatterFactory.cs
-│   │   └── Formatters/                  # Telegram, ntfy, Discord, Generic, Custom
+│   │   ├── WebhookFormatterFactory.Log.cs
+│   │   ├── WebhookNotificationService.cs
+│   │   ├── WebhookNotificationService.Log.cs
+│   │   └── Formatters/                      # Telegram, ntfy, Discord, Generic, Custom
+│   │       ├── TelegramWebhookFormatter.cs
+│   │       ├── NtfyWebhookFormatter.cs
+│   │       ├── DiscordWebhookFormatter.cs
+│   │       ├── GenericWebhookFormatter.cs
+│   │       ├── CustomWebhookFormatter.cs
+│   │       └── CustomWebhookFormatter.Log.cs
 │   └── Storage/
-│       └── EarthquakeStorageService.cs  # Blob-based deduplication
+│       ├── IEarthquakeStorageService.cs
+│       └── EarthquakeStorageService.cs      # Blob-based deduplication
 ├── Telemetry/
-│   └── EarthquakeMetrics.cs             # Application Insights custom metrics
-├── EarthquakeMonitorFunction.cs         # Azure Function entry point
-└── Program.cs                           # DI registration
+│   └── EarthquakeMetrics.cs                 # Application Insights custom metrics
+├── EarthquakeMonitorFunction.cs             # Azure Function entry point
+├── EarthquakeMonitorFunction.Log.cs
+└── Program.cs                               # DI registration
 ```
 
 ---
@@ -183,11 +204,27 @@ The Function App resolves the secret at runtime — **zero code changes required
 dotnet test
 ```
 
-66 unit tests covering:
+93 unit tests covering:
 - API client response parsing and error handling (USGS + SeismicPortal)
 - Webhook formatter output for all 5 channels
-- Deduplication logic
+- Blob storage deduplication (`EarthquakeStorageService`)
+- Webhook notification service (configured/unconfigured, HTTP success/failure, exception handling)
+- Application Insights telemetry (`EarthquakeMetrics`)
 - Function orchestration and magnitude filtering
+
+---
+
+## ✅ CI / CD
+
+Every push to `master` runs the following pipeline via GitHub Actions:
+
+1. **Format check** — `dotnet format --verify-no-changes` enforces the `.editorconfig` rules
+2. **Build** — `dotnet build --configuration Release`
+3. **Test** — `dotnet test --configuration Release`
+4. **Publish** — produces the deployment artifact
+5. **Deploy** — uploads to Azure Function App (only if all previous steps pass)
+
+The publish artifact is shared between jobs, so the codebase is compiled only once.
 
 ---
 
@@ -212,6 +249,8 @@ Recommended hosting plan: **Flex Consumption** for cost-efficient, event-driven 
 | Secrets | Azure Key Vault + Managed Identity |
 | Observability | Application Insights |
 | Testing | xUnit + Moq |
+| Code style | EditorConfig + dotnet format |
+| CI / CD | GitHub Actions |
 
 ---
 

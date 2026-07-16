@@ -3,7 +3,6 @@ using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using EarthquakeNotifier.Domain;
-using EarthquakeNotifier.Infrastructure.Notifications;
 
 namespace EarthquakeNotifier.Infrastructure.Notifications.Formatters
 {
@@ -23,17 +22,17 @@ namespace EarthquakeNotifier.Infrastructure.Notifications.Formatters
             var payload = new
             {
                 earthquakeId = notification.EarthquakeId,
-                magnitude    = notification.Magnitude,
-                place        = notification.Place,
-                time         = notification.Time.ToString("o"),
-                latitude     = notification.Latitude,
-                longitude    = notification.Longitude,
-                depth        = notification.Depth,
-                url          = notification.Url,
-                timestamp    = DateTime.UtcNow.ToString("o")
+                magnitude = notification.Magnitude,
+                place = notification.Place,
+                time = notification.Time.ToString("o"),
+                latitude = notification.Latitude,
+                longitude = notification.Longitude,
+                depth = notification.Depth,
+                url = notification.Url,
+                timestamp = DateTime.UtcNow.ToString("o")
             };
 
-            var json    = JsonSerializer.Serialize(payload);
+            var json = JsonSerializer.Serialize(payload);
             var request = new HttpRequestMessage(HttpMethod.Post, config.BaseUrl)
             {
                 Content = new StringContent(json, Encoding.UTF8, "application/json")

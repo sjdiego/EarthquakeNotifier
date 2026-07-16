@@ -12,6 +12,6 @@ namespace EarthquakeNotifier.Infrastructure.Notifications
         /// Formats and dispatches a webhook notification for the given earthquake event.
         /// </summary>
         /// <param name="earthquake">The earthquake event to notify about.</param>
-        Task SendAsync(EarthquakeNotification earthquake);
+        public Task SendAsync(EarthquakeNotification earthquake);
     }
 }

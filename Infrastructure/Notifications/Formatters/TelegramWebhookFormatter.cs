@@ -4,7 +4,6 @@ using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using EarthquakeNotifier.Domain;
-using EarthquakeNotifier.Infrastructure.Notifications;
 
 namespace EarthquakeNotifier.Infrastructure.Notifications.Formatters
 {
@@ -27,14 +26,14 @@ namespace EarthquakeNotifier.Infrastructure.Notifications.Formatters
 
             var baseUrl = (config.BaseUrl?.TrimEnd('/') is { Length: > 0 } b) ? b : DefaultBaseUrl;
             var richUrl = $"{baseUrl}/bot{config.Token}/sendRichMessage";
-            var chatId  = config.Dest;
+            var chatId = config.Dest;
 
-            var mag   = notification.Magnitude.ToString("F1", CultureInfo.InvariantCulture);
+            var mag = notification.Magnitude.ToString("F1", CultureInfo.InvariantCulture);
             var depth = notification.Depth.ToString("F1", CultureInfo.InvariantCulture);
-            var lat   = notification.Latitude.ToString("F4", CultureInfo.InvariantCulture);
-            var lon   = notification.Longitude.ToString("F4", CultureInfo.InvariantCulture);
+            var lat = notification.Latitude.ToString("F4", CultureInfo.InvariantCulture);
+            var lon = notification.Longitude.ToString("F4", CultureInfo.InvariantCulture);
 
-            var emoji  = notification.Magnitude >= 6.0 ? "\uD83D\uDEA8" : notification.Magnitude >= 4.0 ? "\uD83D\uDD34" : "\uD83C\uDF0E";
+            var emoji = notification.Magnitude >= 6.0 ? "\uD83D\uDEA8" : notification.Magnitude >= 4.0 ? "\uD83D\uDD34" : "\uD83C\uDF0E";
             var header = notification.Magnitude >= 6.0 ? "Major Earthquake Alert"
                        : notification.Magnitude >= 4.0 ? "Earthquake Alert"
                        : "Seismic Activity";
@@ -55,10 +54,10 @@ namespace EarthquakeNotifier.Infrastructure.Notifications.Formatters
 
             var payload = new
             {
-                chat_id      = chatId,
+                chat_id = chatId,
                 rich_message = new
                 {
-                    html                  = richText,
+                    html = richText,
                     skip_entity_detection = true
                 },
                 reply_markup = new

@@ -1,11 +1,10 @@
 using System;
+using EarthquakeNotifier.Infrastructure.Notifications;
+using EarthquakeNotifier.Infrastructure.Notifications.Formatters;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
-using EarthquakeNotifier.Infrastructure.Notifications;
-using EarthquakeNotifier.Infrastructure.Notifications.Formatters;
 
 namespace EarthquakeNotifier.Tests.Services.Webhooks
 {

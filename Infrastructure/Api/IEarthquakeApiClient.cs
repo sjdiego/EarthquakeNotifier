@@ -16,5 +16,5 @@ public interface IEarthquakeApiClient
     /// Returns a failure result if the API is unreachable or returns invalid data.
     /// </summary>
     /// <param name="minMagnitude">Minimum earthquake magnitude to include in results.</param>
-    Task<Result<List<EarthquakeNotification>>> GetRecentEarthquakesAsync(double minMagnitude);
+    public Task<Result<List<EarthquakeNotification>>> GetRecentEarthquakesAsync(double minMagnitude);
 }

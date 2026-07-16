@@ -4,7 +4,6 @@ using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using EarthquakeNotifier.Domain;
-using EarthquakeNotifier.Infrastructure.Notifications;
 
 namespace EarthquakeNotifier.Infrastructure.Notifications.Formatters
 {
@@ -22,8 +21,8 @@ namespace EarthquakeNotifier.Infrastructure.Notifications.Formatters
 
         public HttpRequestMessage BuildRequest(WebhookConfig config, EarthquakeNotification notification)
         {
-            var baseUrl    = (config.BaseUrl?.TrimEnd('/') is { Length: > 0 } b) ? b : DefaultBaseUrl;
-            var webhookUrl = $"{baseUrl}/{config.Token}";
+            string baseUrl = (config.BaseUrl?.TrimEnd('/') is { Length: > 0 } b) ? b : DefaultBaseUrl;
+            string webhookUrl = $"{baseUrl}/{config.Token}";
 
             var payload = new
             {
@@ -37,30 +36,30 @@ namespace EarthquakeNotifier.Infrastructure.Notifications.Formatters
                         color       = GetColorByMagnitude(notification.Magnitude),
                         fields = new object[]
                         {
-                            new { 
-                                name = "Magnitude",   
-                                value = notification.Magnitude.ToString("F1", CultureInfo.InvariantCulture), 
-                                inline = true  
+                            new {
+                                name = "Magnitude",
+                                value = notification.Magnitude.ToString("F1", CultureInfo.InvariantCulture),
+                                inline = true
                             },
-                            new { 
-                                name = "Depth",       
-                                value = $"{notification.Depth.ToString("F1", CultureInfo.InvariantCulture)} km", 
-                                inline = true  
+                            new {
+                                name = "Depth",
+                                value = $"{notification.Depth.ToString("F1", CultureInfo.InvariantCulture)} km",
+                                inline = true
                             },
-                            new { 
-                                name = "Time (UTC)",  
-                                value = notification.Time.ToString("yyyy-MM-dd HH:mm:ss"), 
-                                inline = false 
+                            new {
+                                name = "Time (UTC)",
+                                value = notification.Time.ToString("yyyy-MM-dd HH:mm:ss"),
+                                inline = false
                             },
-                            new { 
-                                name = "Coordinates", 
-                                value = $"Lat: {notification.Latitude.ToString("F4", CultureInfo.InvariantCulture)}\nLon: {notification.Longitude.ToString("F4", CultureInfo.InvariantCulture)}", 
-                                inline = false 
+                            new {
+                                name = "Coordinates",
+                                value = $"Lat: {notification.Latitude.ToString("F4", CultureInfo.InvariantCulture)}\nLon: {notification.Longitude.ToString("F4", CultureInfo.InvariantCulture)}",
+                                inline = false
                             },
-                            new { 
-                                name = "Location",    
-                                value = notification.Place, 
-                                inline = false 
+                            new {
+                                name = "Location",
+                                value = notification.Place,
+                                inline = false
                             }
                         },
                         url       = notification.Url,
@@ -69,7 +68,7 @@ namespace EarthquakeNotifier.Infrastructure.Notifications.Formatters
                 }
             };
 
-            var json = JsonSerializer.Serialize(payload);
+            string json = JsonSerializer.Serialize(payload);
             return new HttpRequestMessage(HttpMethod.Post, webhookUrl)
             {
                 Content = new StringContent(json, Encoding.UTF8, "application/json")
@@ -82,7 +81,7 @@ namespace EarthquakeNotifier.Infrastructure.Notifications.Formatters
             >= 7.0 => 0xFF6600,
             >= 6.0 => 0xFFCC00,
             >= 5.0 => 0x99CC00,
-            _      => 0x0099CC
+            _ => 0x0099CC
         };
     }
 }

@@ -13,19 +13,12 @@ namespace EarthquakeNotifier.Infrastructure.Storage
     /// Persists earthquake events to Azure Blob Storage using an atomic IfNoneMatch condition
     /// to prevent duplicate processing across concurrent function instances.
     /// </summary>
-    public class EarthquakeStorageService : IEarthquakeStorageService
+    /// <remarks>
+    /// Initializes the service with the blob container that stores processed earthquake events.
+    /// </remarks>
+    public partial class EarthquakeStorageService(BlobContainerClient containerClient, ILogger<EarthquakeStorageService> logger) : IEarthquakeStorageService
     {
-        private readonly BlobContainerClient _containerClient;
-        private readonly ILogger<EarthquakeStorageService> _logger;
-
-        /// <summary>
-        /// Initializes the service with the blob container that stores processed earthquake events.
-        /// </summary>
-        public EarthquakeStorageService(BlobContainerClient containerClient, ILogger<EarthquakeStorageService> logger)
-        {
-            _containerClient = containerClient;
-            _logger          = logger;
-        }
+        private static readonly JsonSerializerOptions _options = new() { WriteIndented = true };
 
         /// <inheritdoc/>
         /// <remarks>
@@ -34,12 +27,12 @@ namespace EarthquakeNotifier.Infrastructure.Storage
         /// </remarks>
         public async Task<bool> TrySaveAsync(EarthquakeNotification earthquake)
         {
-            var blobName    = $"{earthquake.EarthquakeId}.json";
-            var jsonContent = JsonSerializer.Serialize(earthquake, new JsonSerializerOptions { WriteIndented = true });
-            var binaryData  = BinaryData.FromString(jsonContent);
-            var blobClient  = _containerClient.GetBlobClient(blobName);
+            var blobName = $"{earthquake.EarthquakeId}.json";
+            var jsonContent = JsonSerializer.Serialize(earthquake, _options);
+            var binaryData = BinaryData.FromString(jsonContent);
+            var blobClient = containerClient.GetBlobClient(blobName);
 
-            _logger.LogDebug("Uploading earthquake {earthquakeId} to blob storage as {blobName}", earthquake.EarthquakeId, blobName);
+            LogUploading(logger, earthquake.EarthquakeId, blobName);
 
             try
             {
@@ -48,7 +41,7 @@ namespace EarthquakeNotifier.Infrastructure.Storage
                     Conditions = new BlobRequestConditions { IfNoneMatch = ETag.All }
                 });
 
-                _logger.LogInformation("Saved earthquake {earthquakeId} to blob storage", earthquake.EarthquakeId);
+                LogSaved(logger, earthquake.EarthquakeId);
                 return true;
             }
             catch (RequestFailedException ex) when (ex.Status == 409 || ex.Status == 412)
@@ -57,5 +50,11 @@ namespace EarthquakeNotifier.Infrastructure.Storage
                 return false;
             }
         }
+
+        [LoggerMessage(Level = LogLevel.Debug, Message = "Uploading earthquake {earthquakeId} to blob storage as {blobName}")]
+        private static partial void LogUploading(ILogger logger, string earthquakeId, string blobName);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Saved earthquake {earthquakeId} to blob storage")]
+        private static partial void LogSaved(ILogger logger, string earthquakeId);
     }
 }

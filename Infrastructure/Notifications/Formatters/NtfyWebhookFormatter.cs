@@ -3,7 +3,6 @@ using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using EarthquakeNotifier.Domain;
-using EarthquakeNotifier.Infrastructure.Notifications;
 
 namespace EarthquakeNotifier.Infrastructure.Notifications.Formatters
 {
@@ -21,27 +20,27 @@ namespace EarthquakeNotifier.Infrastructure.Notifications.Formatters
         public HttpRequestMessage BuildRequest(WebhookConfig config, EarthquakeNotification notification)
         {
             var baseUrl = config.BaseUrl?.TrimEnd('/') ?? string.Empty;
-            var topic   = config.Dest?.Trim('/') is { Length: > 0 } t ? t : "earthquakes";
+            var topic = config.Dest?.Trim('/') is { Length: > 0 } t ? t : "earthquakes";
 
-            var mag      = notification.Magnitude.ToString("F1", CultureInfo.InvariantCulture);
-            var depth    = notification.Depth.ToString("F1", CultureInfo.InvariantCulture);
+            var mag = notification.Magnitude.ToString("F1", CultureInfo.InvariantCulture);
+            var depth = notification.Depth.ToString("F1", CultureInfo.InvariantCulture);
             var priority = notification.Magnitude >= 6.0 ? 5 : notification.Magnitude >= 4.0 ? 4 : 3;
-            var emoji    = notification.Magnitude >= 6.0 ? "\uD83D\uDEA8" : notification.Magnitude >= 4.0 ? "\uD83D\uDD34" : "\uD83C\uDF0E";
-            var tags     = notification.Magnitude >= 6.0 ? new[] { "rotating_light", "earth_americas" }
-                         : notification.Magnitude >= 4.0 ? new[] { "red_circle",     "earth_americas" }
-                         :                                 new[] { "earth_americas" };
+            var emoji = notification.Magnitude >= 6.0 ? "\uD83D\uDEA8" : notification.Magnitude >= 4.0 ? "\uD83D\uDD34" : "\uD83C\uDF0E";
+            var tags = notification.Magnitude >= 6.0 ? new[] { "rotating_light", "earth_americas" }
+                         : notification.Magnitude >= 4.0 ? new[] { "red_circle", "earth_americas" }
+                         : new[] { "earth_americas" };
 
             var payload = new
             {
                 topic,
-                title   = $"{emoji} Earthquake M{mag} \u2014 {notification.Place}",
+                title = $"{emoji} Earthquake M{mag} \u2014 {notification.Place}",
                 message = $"Depth: {depth} km | Time: {notification.Time:yyyy-MM-dd HH:mm} UTC",
                 tags,
                 priority,
                 click = notification.Url
             };
 
-            var json    = JsonSerializer.Serialize(payload);
+            var json = JsonSerializer.Serialize(payload);
             var request = new HttpRequestMessage(HttpMethod.Post, baseUrl)
             {
                 Content = new StringContent(json, Encoding.UTF8, "application/json")

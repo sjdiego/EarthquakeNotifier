@@ -1,10 +1,6 @@
-using Azure.Storage.Blobs;
-using Microsoft.Azure.Functions.Worker;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using System;
 using System.Net.Http;
-using EarthquakeNotifier.Domain;
+using Azure.Storage.Blobs;
 using EarthquakeNotifier.Infrastructure.Api;
 using EarthquakeNotifier.Infrastructure.Api.SeismicPortal;
 using EarthquakeNotifier.Infrastructure.Api.Usgs;
@@ -12,6 +8,9 @@ using EarthquakeNotifier.Infrastructure.Notifications;
 using EarthquakeNotifier.Infrastructure.Notifications.Formatters;
 using EarthquakeNotifier.Infrastructure.Storage;
 using EarthquakeNotifier.Telemetry;
+using Microsoft.Azure.Functions.Worker;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 var host = new HostBuilder()
     .ConfigureFunctionsWorkerDefaults()
@@ -59,8 +58,8 @@ var host = new HostBuilder()
             provider.GetRequiredService<EarthquakeMetrics>(),
             new WebhookConfig(
                 BaseUrl: configuration["WEBHOOK_BASE_URL"],
-                Dest:    configuration["WEBHOOK_DEST"],
-                Token:   configuration["WEBHOOK_TOKEN"])));
+                Dest: configuration["WEBHOOK_DEST"],
+                Token: configuration["WEBHOOK_TOKEN"])));
 
         // Register Application Insights metrics tracker
         services.AddSingleton<EarthquakeMetrics>();

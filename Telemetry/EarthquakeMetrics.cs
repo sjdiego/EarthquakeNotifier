@@ -9,32 +9,25 @@ namespace EarthquakeNotifier.Telemetry;
 /// <summary>
 /// Tracks Application Insights custom telemetry for earthquake processing events.
 /// </summary>
-public class EarthquakeMetrics
+public class EarthquakeMetrics(TelemetryClient telemetryClient)
 {
-    private readonly TelemetryClient _telemetryClient;
-
     private const string EventEarthquakeProcessed = "EarthquakeProcessed";
-    private const string EventApiFailed           = "EarthquakeApiFailed";
-    private const string EventWebhookFailed       = "WebhookFailed";
-
-    public EarthquakeMetrics(TelemetryClient telemetryClient)
-    {
-        _telemetryClient = telemetryClient;
-    }
+    private const string EventApiFailed = "EarthquakeApiFailed";
+    private const string EventWebhookFailed = "WebhookFailed";
 
     /// <summary>
     /// Tracks a successfully processed earthquake event with its key properties.
     /// </summary>
     public void TrackEarthquakeProcessed(EarthquakeNotification earthquake)
     {
-        _telemetryClient.TrackEvent(EventEarthquakeProcessed, new Dictionary<string, string>
+        telemetryClient.TrackEvent(EventEarthquakeProcessed, new Dictionary<string, string>
         {
             ["earthquakeId"] = earthquake.EarthquakeId,
-            ["place"]        = earthquake.Place,
-            ["magnitude"]    = earthquake.Magnitude.ToString("F1"),
-            ["depth"]        = earthquake.Depth.ToString("F1"),
-            ["time"]         = earthquake.Time.ToString("O"),
-            ["url"]          = earthquake.Url
+            ["place"] = earthquake.Place,
+            ["magnitude"] = earthquake.Magnitude.ToString("F1"),
+            ["depth"] = earthquake.Depth.ToString("F1"),
+            ["time"] = earthquake.Time.ToString("O"),
+            ["url"] = earthquake.Url
         });
     }
 
@@ -47,13 +40,13 @@ public class EarthquakeMetrics
         {
             var exTelemetry = new ExceptionTelemetry(exception);
             exTelemetry.Properties["provider"] = provider;
-            exTelemetry.Properties["context"]  = EventApiFailed;
-            _telemetryClient.TrackException(exTelemetry);
+            exTelemetry.Properties["context"] = EventApiFailed;
+            telemetryClient.TrackException(exTelemetry);
         }
 
-        _telemetryClient.TrackEvent(EventApiFailed, new Dictionary<string, string>
+        telemetryClient.TrackEvent(EventApiFailed, new Dictionary<string, string>
         {
-            ["provider"]     = provider,
+            ["provider"] = provider,
             ["errorMessage"] = errorMessage
         });
     }
@@ -67,8 +60,8 @@ public class EarthquakeMetrics
         {
             var exTelemetry = new ExceptionTelemetry(exception);
             exTelemetry.Properties["earthquakeId"] = earthquakeId;
-            exTelemetry.Properties["context"]      = EventWebhookFailed;
-            _telemetryClient.TrackException(exTelemetry);
+            exTelemetry.Properties["context"] = EventWebhookFailed;
+            telemetryClient.TrackException(exTelemetry);
         }
 
         var properties = new Dictionary<string, string>
@@ -79,6 +72,6 @@ public class EarthquakeMetrics
         if (httpStatusCode.HasValue)
             properties["httpStatusCode"] = httpStatusCode.Value.ToString();
 
-        _telemetryClient.TrackEvent(EventWebhookFailed, properties);
+        telemetryClient.TrackEvent(EventWebhookFailed, properties);
     }
 }
