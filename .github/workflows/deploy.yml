@@ -33,11 +33,14 @@ jobs:
       - name: Publish
         run: dotnet publish EarthquakeNotifier.csproj --configuration Release --no-restore --output ./publish
 
+      - name: Zip publish output
+        run: cd ./publish && zip -r ../publish.zip . && cd ..
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: publish
-          path: ./publish
+          path: ./publish.zip
 
   deploy:
     runs-on: ubuntu-latest
@@ -48,7 +51,10 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: publish
-          path: ./publish
+          path: ./
+
+      - name: Unzip publish output
+        run: unzip ./publish.zip -d ./publish
 
       - name: Login to Azure
         uses: azure/login@v2
