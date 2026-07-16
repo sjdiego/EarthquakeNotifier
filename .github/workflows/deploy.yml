@@ -11,10 +11,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.2
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v4.3.1
         with:
           dotnet-version: '10.0.x'
 
@@ -37,7 +37,7 @@ jobs:
         run: cd ./publish && zip -r ../publish.zip . && cd ..
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.6.2
         with:
           name: publish
           path: ./publish.zip
@@ -48,7 +48,7 @@ jobs:
 
     steps:
       - name: Download artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v4.3.0
         with:
           name: publish
           path: ./
@@ -57,12 +57,12 @@ jobs:
         run: unzip ./publish.zip -d ./publish
 
       - name: Login to Azure
-        uses: azure/login@v2
+        uses: azure/login@v2.3.0
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Deploy to Azure Function App
-        uses: Azure/functions-action@v1
+        uses: Azure/functions-action@v1.5.6
         with:
           app-name: EarthquakeNotifier20260714015108
           package: ./publish
